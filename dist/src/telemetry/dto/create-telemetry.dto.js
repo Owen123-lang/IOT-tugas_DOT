@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateTelemetryDto = void 0;
 const class_validator_1 = require("class-validator");
-const swagger_1 = require("@nestjs/swagger");
 class CreateTelemetryDto {
     apiKey;
     temperature;
@@ -20,28 +19,21 @@ class CreateTelemetryDto {
 }
 exports.CreateTelemetryDto = CreateTelemetryDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'device-api-key-here' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateTelemetryDto.prototype, "apiKey", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 25.5 }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateTelemetryDto.prototype, "temperature", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 60.2 }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateTelemetryDto.prototype, "humidity", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({
-        example: { pressure: 1013, light: 450 },
-        description: 'Additional sensor data in JSON format',
-    }),
     (0, class_validator_1.IsObject)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Object)

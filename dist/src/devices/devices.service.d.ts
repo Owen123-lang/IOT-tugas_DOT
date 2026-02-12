@@ -13,12 +13,12 @@ export declare class DevicesService {
     update(id: string, userId: string, updateDeviceDto: UpdateDeviceDto): Promise<DeviceResponseDto>;
     remove(id: string, userId: string): Promise<void>;
     findByApiKey(apiKey: string): Promise<{
-        type: string;
-        description: string | null;
         name: string;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        type: string;
+        description: string | null;
         apiKey: string;
         userId: string;
     } | null>;

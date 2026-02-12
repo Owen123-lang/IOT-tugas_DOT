@@ -8,3 +8,9 @@ node_modules
 VIDEO_DEMO_SCRIPT.md
 QUICK_START.md
 RECORDING_CHECKLIST.md
+
+# Directories to exclude from GitHub
+env/
+diagram_guide/
+catatanbuatvideo/
+CRUD_Interconnection_proof/

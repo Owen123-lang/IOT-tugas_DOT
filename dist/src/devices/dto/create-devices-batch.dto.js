@@ -12,29 +12,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateDevicesBatchDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
-const swagger_1 = require("@nestjs/swagger");
 const create_device_dto_1 = require("./create-device.dto");
 class CreateDevicesBatchDto {
     devices;
 }
 exports.CreateDevicesBatchDto = CreateDevicesBatchDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({
-        type: [create_device_dto_1.CreateDeviceDto],
-        description: 'Array of devices to create',
-        example: [
-            {
-                name: 'ESP32 Living Room',
-                type: 'ESP32',
-                description: 'Temperature sensor',
-            },
-            {
-                name: 'Arduino Kitchen',
-                type: 'Arduino',
-                description: 'Gas detector',
-            },
-        ],
-    }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ArrayMinSize)(1),
     (0, class_validator_1.ValidateNested)({ each: true }),

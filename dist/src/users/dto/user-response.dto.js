@@ -10,7 +10,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserResponseDto = void 0;
-const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
 class UserResponseDto {
     id;
@@ -24,26 +23,6 @@ class UserResponseDto {
     }
 }
 exports.UserResponseDto = UserResponseDto;
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
-], UserResponseDto.prototype, "id", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
-], UserResponseDto.prototype, "email", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", String)
-], UserResponseDto.prototype, "name", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", Date)
-], UserResponseDto.prototype, "createdAt", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    __metadata("design:type", Date)
-], UserResponseDto.prototype, "updatedAt", void 0);
 __decorate([
     (0, class_transformer_1.Exclude)(),
     __metadata("design:type", String)

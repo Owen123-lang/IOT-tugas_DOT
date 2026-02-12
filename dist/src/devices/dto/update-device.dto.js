@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateDeviceDto = void 0;
 const class_validator_1 = require("class-validator");
-const swagger_1 = require("@nestjs/swagger");
 class UpdateDeviceDto {
     name;
     type;
@@ -19,19 +18,16 @@ class UpdateDeviceDto {
 }
 exports.UpdateDeviceDto = UpdateDeviceDto;
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'ESP32 Bedroom' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateDeviceDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'ESP32' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateDeviceDto.prototype, "type", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Updated description' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
