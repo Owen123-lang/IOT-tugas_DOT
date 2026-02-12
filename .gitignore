@@ -1,0 +1,10 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+# Files to exclude from GitHub
+VIDEO_DEMO_SCRIPT.md
+QUICK_START.md
+RECORDING_CHECKLIST.md

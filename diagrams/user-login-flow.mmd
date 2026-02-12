@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant Client
+    participant AuthController
+    participant AuthService
+    participant UserService
+    participant Prisma
+    participant Database
+
+    Note over Client,Database: User Login Flow
+    Client->>AuthController: POST /auth/login
+    AuthController->>AuthService: login(credentials)
+    AuthService->>UserService: findByEmail(email)
+    UserService->>Prisma: user.findUnique({email})
+    Prisma->>Database: SELECT * FROM users WHERE email = ?
+    Database-->>Prisma: user data
+    Prisma-->>UserService: user object
+    UserService->>UserService: comparePassword()
+    UserService-->>AuthService: user object
+    AuthService->>AuthService: validateUser() & generateJWT()
+    AuthService-->>AuthController: { access_token, user }
+    AuthController-->>Client: 200 OK + JWT Token

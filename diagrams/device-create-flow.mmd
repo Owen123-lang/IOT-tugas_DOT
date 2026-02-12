@@ -1,0 +1,16 @@
+sequenceDiagram
+    participant Client
+    participant DeviceController
+    participant DeviceService
+    participant Prisma
+    participant Database
+
+    Note over Client,Database: Create Device Flow
+    Client->>DeviceController: POST /devices + JWT
+    DeviceController->>DeviceService: create(userId, deviceData)
+    DeviceService->>Prisma: device.create({data: {...deviceData, userId}})
+    Prisma->>Database: INSERT INTO devices
+    Database-->>Prisma: created device (with auto-generated apiKey)
+    Prisma-->>DeviceService: device object
+    DeviceService-->>DeviceController: DeviceResponseDto
+    DeviceController-->>Client: 201 Created + device data

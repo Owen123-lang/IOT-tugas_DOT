@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0;
+            background: white;
+        }
+        .mermaid { 
+            text-align: center; 
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="mermaid">
+sequenceDiagram
+    participant Device
+    participant TelemetryController
+    participant TelemetryService
+    participant DeviceService
+    participant Prisma
+    participant Database
+
+    Note over Device,Database: Submit Telemetry Data
+    Device->>TelemetryController: POST /telemetry + API Key
+    TelemetryController->>TelemetryService: create(telemetryData)
+    TelemetryService->>DeviceService: findByApiKey(apiKey)
+    DeviceService->>Prisma: device.findUnique({where: {apiKey}})
+    Prisma->>Database: SELECT * FROM devices WHERE apiKey = ?
+    Database-->>Prisma: device data
+    Prisma-->>DeviceService: device object
+    DeviceService-->>TelemetryService: device object
+    alt Valid API Key
+        TelemetryService->>Prisma: telemetry.create({data: {deviceId: device.id, ...telemetryData}})
+        Prisma->>Database: INSERT INTO telemetry
+        Database-->>Prisma: telemetry record
+        Prisma-->>TelemetryService: telemetry object
+        TelemetryService-->>TelemetryController: TelemetryResponseDto
+        TelemetryController-->>Device: 201 Created
+    else Invalid API Key
+        TelemetryService-->>TelemetryController: 401 Unauthorized
+        TelemetryController-->>Device: 401 Unauthorized
+    end
+    </div>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#007bff',
+                primaryTextColor: '#333',
+                primaryBorderColor: '#007bff',
+                lineColor: '#666',
+                secondaryColor: '#f8f9fa',
+                tertiaryColor: '#e9ecef'
+            }
+        });
+        
+        // Add button to download as PNG
+        setTimeout(() => {
+            const button = document.createElement('button');
+            button.textContent = 'Download as PNG';
+            button.style.position = 'fixed';
+            button.style.bottom = '20px';
+            button.style.right = '20px';
+            button.style.padding = '12px 24px';
+            button.style.backgroundColor = '#007bff';
+            button.style.color = 'white';
+            button.style.border = 'none';
+            button.style.borderRadius = '6px';
+            button.style.cursor = 'pointer';
+            button.style.fontSize = '14px';
+            button.style.fontWeight = 'bold';
+            button.style.zIndex = '1000';
+            button.style.boxShadow = '0 4px 12px rgba(0,123,255,0.3)';
+            
+            button.onclick = () => {
+                const svg = document.querySelector('.mermaid svg');
+                if (svg) {
+                    const svgData = new XMLSerializer().serializeToString(svg);
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const img = new Image();
+                    
+                    img.onload = function() {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                        
+                        canvas.toBlob(function(blob) {
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'telemetry-submit-flow.png';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                        }, 'image/png');
+                    };
+                    
+                    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                }
+            };
+            
+            document.body.appendChild(button);
+        }, 1000);
+    </script>
+</body>
+</html>

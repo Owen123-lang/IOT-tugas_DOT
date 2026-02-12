@@ -1,0 +1,32 @@
+erDiagram
+    User {
+        string id PK
+        string email UK
+        string password
+        string name
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Device {
+        string id PK
+        string name
+        string type
+        string description
+        string apiKey UK
+        string userId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Telemetry {
+        string id PK
+        string deviceId FK
+        float temperature
+        float humidity
+        json data
+        datetime timestamp
+    }
+
+    User ||--o{ Device : "owns"
+    Device ||--o{ Telemetry : "generates"

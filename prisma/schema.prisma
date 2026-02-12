@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // One-to-Many: 1 User has many Devices
+  devices   Device[]
+
+  @@map("users")
+}
+
+model Device {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // e.g., "ESP32", "Arduino", "Sensor"
+  description String?
+  apiKey      String   @unique @default(uuid()) // For device authentication
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Many-to-One: Many Devices belong to 1 User
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One-to-Many: 1 Device has many Telemetry data
+  telemetry   Telemetry[]
+
+  @@map("devices")
+}
+
+model Telemetry {
+  id          String   @id @default(uuid())
+  deviceId    String
+  temperature Float?
+  humidity    Float?
+  data        Json?    // For flexible sensor data
+  timestamp   DateTime @default(now())
+
+  // Many-to-One: Many Telemetry belong to 1 Device
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@map("telemetry")
+  @@index([deviceId])
+  @@index([timestamp])
+}

@@ -1,0 +1,73 @@
+graph TB
+    subgraph "Client Layer"
+        WebApp[Web Application]
+        MobileApp[Mobile App]
+        IoTDevice[IoT Device]
+    end
+
+    subgraph "API Gateway / Load Balancer"
+        LB[Load Balancer]
+    end
+
+    subgraph "NestJS Application"
+        subgraph "Controllers"
+            AuthController[Auth Controller]
+            DeviceController[Device Controller]
+            TelemetryController[Telemetry Controller]
+        end
+
+        subgraph "Services"
+            AuthService[Auth Service]
+            UserService[User Service]
+            DeviceService[Device Service]
+            TelemetryService[Telemetry Service]
+        end
+
+        subgraph "Guards & Middleware"
+            JWTGuard[JWT Auth Guard]
+            ValidationPipe[Validation Pipe]
+        end
+    end
+
+    subgraph "Data Layer"
+        PrismaORM[Prisma ORM]
+        PostgreSQL[(PostgreSQL Database)]
+    end
+
+    subgraph "External Services"
+        Swagger[Swagger Documentation]
+        PrismaStudio[Prisma Studio]
+    end
+
+    %% Authentication Flow
+    WebApp --> LB
+    MobileApp --> LB
+    IoTDevice --> LB
+    
+    LB --> JWTGuard
+    JWTGuard --> ValidationPipe
+    ValidationPipe --> AuthController
+    ValidationPipe --> DeviceController
+    ValidationPipe --> TelemetryController
+
+    %% Controller to Service mappings
+    AuthController --> AuthService
+    DeviceController --> DeviceService
+    TelemetryController --> TelemetryService
+
+    %% Service Dependencies
+    AuthService --> UserService
+    DeviceService --> UserService
+    TelemetryService --> DeviceService
+
+    %% Service to Database
+    UserService --> PrismaORM
+    DeviceService --> PrismaORM
+    TelemetryService --> PrismaORM
+
+    %% Database Connection
+    PrismaORM --> PostgreSQL
+
+    %% Documentation Tools
+    LB --> Swagger
+    PrismaORM --> PrismaStudio

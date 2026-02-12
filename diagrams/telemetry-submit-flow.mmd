@@ -1,0 +1,28 @@
+sequenceDiagram
+    participant Device
+    participant TelemetryController
+    participant TelemetryService
+    participant DeviceService
+    participant Prisma
+    participant Database
+
+    Note over Device,Database: Submit Telemetry Data
+    Device->>TelemetryController: POST /telemetry + API Key
+    TelemetryController->>TelemetryService: create(telemetryData)
+    TelemetryService->>DeviceService: findByApiKey(apiKey)
+    DeviceService->>Prisma: device.findUnique({where: {apiKey}})
+    Prisma->>Database: SELECT * FROM devices WHERE apiKey = ?
+    Database-->>Prisma: device data
+    Prisma-->>DeviceService: device object
+    DeviceService-->>TelemetryService: device object
+    alt Valid API Key
+        TelemetryService->>Prisma: telemetry.create({data: {deviceId: device.id, ...telemetryData}})
+        Prisma->>Database: INSERT INTO telemetry
+        Database-->>Prisma: telemetry record
+        Prisma-->>TelemetryService: telemetry object
+        TelemetryService-->>TelemetryController: TelemetryResponseDto
+        TelemetryController-->>Device: 201 Created
+    else Invalid API Key
+        TelemetryService-->>TelemetryController: 401 Unauthorized
+        TelemetryController-->>Device: 401 Unauthorized
+    end

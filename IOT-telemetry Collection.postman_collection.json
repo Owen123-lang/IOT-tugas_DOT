@@ -1,0 +1,997 @@
+{
+	"info": {
+		"_postman_id": "702708ee-17fd-4fb2-b86f-b275489b9d45",
+		"name": "IoT Telemetry API",
+		"description": "Postman collection for IoT Telemetry API — a NestJS REST API for managing IoT devices and collecting sensor telemetry data.\n\n## Authentication\n- **User auth**: JWT Bearer token (register/login → get token → use in Authorization header)\n- **Device auth**: API key in request body (for sending telemetry from IoT devices)\n\n## Entity Relationships\n```\nUser (1) → Device (N) → Telemetry (N)\n```\n\n## How to Use\n1. Import this collection and the `IoT Dev.postman_environment.json` environment\n2. Select the **IoT Dev** environment from the dropdown (top-right)\n3. Run requests in order (1–18) or use Collection Runner\n4. Environment variables are auto-populated by test scripts\n\n## Tech Stack\n- NestJS 11 + TypeScript\n- PostgreSQL (NeonDB) + Prisma 7\n- JWT + Passport\n- Swagger UI at `/api`",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "52285863"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"description": "User authentication endpoints. Register a new account or login to get a JWT token.\n\nThe JWT token is automatically saved to the `jwt_token` environment variable by the post-response scripts.",
+			"item": [
+			{
+				"name": "1. Register User",
+				"event": [
+					{
+						"listen": "prerequest",
+						"script": {
+							"exec": [
+								"// Cleanup: If a previous test run left data behind, log in and delete the account first.",
+								"const baseUrl = pm.environment.get('base_url');",
+								"if (!baseUrl) { return; }",
+								"",
+								"pm.sendRequest({",
+								"    url: baseUrl + '/auth/login',",
+								"    method: 'POST',",
+								"    header: { 'Content-Type': 'application/json' },",
+								"    body: {",
+								"        mode: 'raw',",
+								"        raw: JSON.stringify({ email: 'demo@example.com', password: 'password123' })",
+								"    }",
+								"}, function (err, loginRes) {",
+								"    if (err || loginRes.code !== 200) { return; }",
+								"    const token = loginRes.json().access_token;",
+								"    pm.sendRequest({",
+								"        url: baseUrl + '/auth/account',",
+								"        method: 'DELETE',",
+								"        header: {",
+								"            'Content-Type': 'application/json',",
+								"            'Authorization': 'Bearer ' + token",
+								"        }",
+								"    }, function () { /* cleanup done */ });",
+								"});"
+							],
+							"type": "text/javascript"
+						}
+					},
+					{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 201 Created', function () {",
+								"    pm.response.to.have.status(201);",
+								"});",
+								"",
+								"pm.test('Response has access_token and user', function () {",
+								"    const res = pm.response.json();",
+								"    pm.expect(res).to.have.property('access_token');",
+								"    pm.expect(res).to.have.property('user');",
+								"    pm.expect(res.user).to.have.property('id');",
+								"    pm.expect(res.user).to.have.property('email');",
+								"    pm.expect(res.user).to.have.property('name');",
+								"});",
+								"",
+								"if (pm.response.code === 201) {",
+								"    const res = pm.response.json();",
+								"    pm.environment.set('jwt_token', res.access_token);",
+								"    pm.environment.set('user_id', res.user.id);",
+								"}"
+							],
+							"type": "text/javascript"
+						}
+					}
+				],
+				"request": {
+					"method": "POST",
+					"header": [],
+					"body": {
+						"mode": "raw",
+						"raw": "{\r\n  \"email\": \"demo@example.com\",\r\n  \"password\": \"password123\",\r\n  \"name\": \"Demo User\"\r\n}",
+						"options": {
+							"raw": {
+								"language": "json"
+							}
+						}
+					},
+					"url": {
+						"raw": "{{base_url}}/auth/register",
+						"host": [
+							"{{base_url}}"
+						],
+						"path": [
+							"auth",
+							"register"
+						]
+					},
+					"description": "Register a new user account.\n\n**Pre-request script:** Automatically cleans up any existing `demo@example.com` account from previous runs (login → delete account) so the collection is safely re-runnable.\n\n**Request Body:**\n- `email` (string, required) — user email\n- `password` (string, required, min 6 chars) — user password\n- `name` (string, required) — display name\n\n**Response (201):**\n- `access_token` — JWT token valid for 7 days\n- `user` — `{ id, email, name }`\n\n**Post-response script:** Saves `jwt_token` and `user_id` to environment."
+				},
+				"response": []
+			},
+				{
+					"name": "2. Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has access_token and user', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.have.property('access_token');",
+									"    pm.expect(res).to.have.property('user');",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    const res = pm.response.json();",
+									"    pm.environment.set('jwt_token', res.access_token);",
+									"    pm.environment.set('user_id', res.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"demo@example.com\",\r\n  \"password\": \"password123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login with existing credentials to get a fresh JWT token.\n\n**Request Body:**\n- `email` (string, required)\n- `password` (string, required)\n\n**Response (200):**\n- `access_token` — JWT token\n- `user` — `{ id, email, name }`\n\n**Post-response script:** Saves `jwt_token` and `user_id` to environment."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Login - Invalid Password (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 401 Unauthorized', function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"demo@example.com\",\r\n  \"password\": \"wrongpassword\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Attempt login with an incorrect password.\n\n**Purpose:** Verify that invalid credentials are rejected with 401 Unauthorized.\n\n**Expected:** Status `401 Unauthorized`."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Devices",
+			"description": "Device management CRUD endpoints. All endpoints require JWT authentication via `Authorization: Bearer <token>` header.\n\nEach user can only access their own devices (ownership validation).",
+			"item": [
+				{
+					"name": "4. Get Devices - No Token (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 401 Unauthorized', function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/devices",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"devices"
+							]
+						},
+						"description": "Attempt to list devices WITHOUT a JWT token.\n\n**Purpose:** Verify that the endpoint is protected by JWT authentication.\n\n**Expected:** Status `401 Unauthorized`."
+					},
+					"response": []
+				},
+				{
+					"name": "5. Create Device - No Token (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 401 Unauthorized', function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Unauthorized Device\",\r\n  \"type\": \"Arduino\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/devices",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"devices"
+							]
+						},
+						"description": "Attempt to create a device WITHOUT a JWT token.\n\n**Purpose:** Verify that creating a device requires authentication.\n\n**Expected:** Status `401 Unauthorized`."
+					},
+					"response": []
+				},
+				{
+					"name": "6. Create Devices - Batch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201 Created', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response is array of 3 devices', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.be.an('array');",
+									"    pm.expect(res).to.have.lengthOf(3);",
+									"});",
+									"",
+									"pm.test('Each device has id and apiKey', function () {",
+									"    const res = pm.response.json();",
+									"    res.forEach(function(device) {",
+									"        pm.expect(device).to.have.property('id');",
+									"        pm.expect(device).to.have.property('apiKey');",
+									"        pm.expect(device).to.have.property('name');",
+									"        pm.expect(device).to.have.property('type');",
+									"    });",
+									"});",
+									"",
+									"if (pm.response.code === 201) {",
+									"    const res = pm.response.json();",
+									"    // Save first device for telemetry + update/delete demos",
+									"    pm.environment.set('device_id', res[0].id);",
+									"    pm.environment.set('device_api_key', res[0].apiKey);",
+									"    // Save second device for telemetry demo",
+									"    pm.environment.set('device_id_2', res[1].id);",
+									"    pm.environment.set('device_api_key_2', res[1].apiKey);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"devices\": [\r\n    {\r\n      \"name\": \"ESP32 Living Room\",\r\n      \"type\": \"ESP32\",\r\n      \"description\": \"Temperature and humidity sensor in the living room\"\r\n    },\r\n    {\r\n      \"name\": \"Arduino Kitchen\",\r\n      \"type\": \"Arduino\",\r\n      \"description\": \"Gas and smoke detector in the kitchen\"\r\n    },\r\n    {\r\n      \"name\": \"ESP32 Rooftop\",\r\n      \"type\": \"ESP32\",\r\n      \"description\": \"Weather station on the rooftop\"\r\n    }\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/devices/batch",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"devices",
+								"batch"
+							]
+						},
+						"description": "Create multiple IoT devices in a single request using a database transaction.\n\n**Auth:** Bearer JWT token required.\n\n**Request Body:**\n- `devices` (array, required, min 1 item) — each item:\n  - `name` (string, required)\n  - `type` (string, required) — e.g. \"ESP32\", \"Arduino\"\n  - `description` (string, optional)\n\n**Response (201):** Array of created devices, each with a unique `apiKey` for sending telemetry.\n\n**Post-response script:** Saves `device_id`, `device_api_key`, `device_id_2`, `device_api_key_2` to environment."
+					},
+					"response": []
+				},
+				{
+					"name": "7. Get All Devices",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response is array of 3 devices', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.be.an('array');",
+									"    pm.expect(res).to.have.lengthOf(3);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/devices",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"devices"
+							]
+						},
+						"description": "Get all devices owned by the authenticated user. Results are sorted by `createdAt` descending (newest first).\n\n**Auth:** Bearer JWT token required.\n\n**Expected:** Status `200 OK`. Array of 3 devices (created in Request 6)."
+					},
+					"response": []
+				},
+				{
+					"name": "8. Get Device by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has correct device ID', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res.id).to.eql(pm.environment.get('device_id'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/devices/{{device_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"devices",
+								"{{device_id}}"
+							]
+						},
+						"description": "Get a specific device by its UUID. Ownership is verified — you can only access your own devices.\n\n**Auth:** Bearer JWT token required.\n\n**Expected:** Status `200 OK`. Single device object matching `{{device_id}}`."
+					},
+					"response": []
+				},
+			{
+				"name": "9. Update Device",
+				"event": [
+					{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"pm.test('Status code is 200 OK', function () {",
+								"    pm.response.to.have.status(200);",
+								"});",
+								"",
+								"pm.test('Device name is updated', function () {",
+								"    const res = pm.response.json();",
+								"    pm.expect(res.name).to.eql('ESP32 Bedroom');",
+								"});",
+								"",
+								"pm.test('Device type is unchanged (partial update)', function () {",
+								"    const res = pm.response.json();",
+								"    pm.expect(res.type).to.eql('ESP32');",
+								"});"
+							],
+							"type": "text/javascript"
+						}
+					}
+				],
+				"request": {
+					"auth": {
+						"type": "bearer",
+						"bearer": [
+							{
+								"key": "token",
+								"value": "{{jwt_token}}",
+								"type": "string"
+							}
+						]
+					},
+					"method": "PATCH",
+					"header": [],
+					"body": {
+						"mode": "raw",
+						"raw": "{\r\n  \"name\": \"ESP32 Bedroom\",\r\n  \"description\": \"Moved sensor to bedroom\"\r\n}",
+						"options": {
+							"raw": {
+								"language": "json"
+							}
+						}
+					},
+					"url": {
+						"raw": "{{base_url}}/devices/{{device_id}}",
+						"host": [
+							"{{base_url}}"
+						],
+						"path": [
+							"devices",
+							"{{device_id}}"
+						]
+					},
+					"description": "Partial update a device. Only provided fields are updated; omitted fields remain unchanged.\n\n**Auth:** Bearer JWT token required.\n\n**Request Body (all optional):**\n- `name` (string)\n- `type` (string)\n- `description` (string)\n\n**Expected:** Status `200 OK`. `name` changed to \"ESP32 Bedroom\", `type` stays \"ESP32\"."
+				},
+				"response": []
+			}
+		]
+		},
+		{
+			"name": "Telemetry",
+			"description": "Telemetry data collection and retrieval endpoints.\n\n- **POST /telemetry**: Send sensor data from IoT devices. Authenticated via device `apiKey` in request body (no JWT needed).\n- **GET /telemetry/device/:deviceId**: Retrieve telemetry data. Requires JWT authentication.",
+			"item": [
+				{
+					"name": "10. Send Telemetry - Device 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201 Created', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response has telemetry data', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.have.property('id');",
+									"    pm.expect(res).to.have.property('deviceId');",
+									"    pm.expect(res.temperature).to.eql(28.5);",
+									"    pm.expect(res.humidity).to.eql(65.3);",
+									"    pm.expect(res).to.have.property('timestamp');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"apiKey\": \"{{device_api_key}}\",\r\n  \"temperature\": 28.5,\r\n  \"humidity\": 65.3,\r\n  \"data\": {\r\n    \"pressure\": 1013,\r\n    \"light\": 450,\r\n    \"battery\": 85\r\n  }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/telemetry",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"telemetry"
+							]
+						},
+						"description": "Send sensor telemetry data from Device 1 (ESP32 Living Room).\n\n**Auth:** Device API key in request body (no JWT needed). This simulates an ESP32 sending data.\n\n**Request Body:**\n- `apiKey` (string, required) — device's unique API key\n- `temperature` (number, optional)\n- `humidity` (number, optional)\n- `data` (object, optional) — flexible JSON for custom sensor data\n\n**Expected:** Status `201 Created`. Telemetry record with `deviceId`, `temperature`, `humidity`, `data`, and `timestamp`."
+					},
+					"response": []
+				},
+				{
+					"name": "11. Send Telemetry - Device 1 (2nd Reading)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201 Created', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Temperature and humidity recorded', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res.temperature).to.eql(29.1);",
+									"    pm.expect(res.humidity).to.eql(62.0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"apiKey\": \"{{device_api_key}}\",\r\n  \"temperature\": 29.1,\r\n  \"humidity\": 62.0\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/telemetry",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"telemetry"
+							]
+						},
+						"description": "Send a second telemetry reading from Device 1. Demonstrates that devices can send multiple readings over time.\n\n**Auth:** Device API key in body.\n\n**Expected:** Status `201 Created`."
+					},
+					"response": []
+				},
+				{
+					"name": "12. Send Telemetry - Device 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201 Created', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response has custom data fields', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res.data).to.have.property('gas_level');",
+									"    pm.expect(res.data).to.have.property('smoke_detected');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"apiKey\": \"{{device_api_key_2}}\",\r\n  \"temperature\": 32.0,\r\n  \"humidity\": 45.5,\r\n  \"data\": {\r\n    \"gas_level\": 120,\r\n    \"smoke_detected\": false\r\n  }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/telemetry",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"telemetry"
+							]
+						},
+						"description": "Send telemetry from Device 2 (Arduino Kitchen). Different devices can send different custom data shapes via the `data` field.\n\n**Auth:** Device 2's API key in body.\n\n**Expected:** Status `201 Created`. Shows gas_level and smoke_detected in data."
+					},
+					"response": []
+				},
+				{
+					"name": "13. Send Telemetry - Invalid Key (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 401 Unauthorized', function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"apiKey\": \"invalid-api-key-12345\",\r\n  \"temperature\": 25.0\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/telemetry",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"telemetry"
+							]
+						},
+						"description": "Attempt to send telemetry with an invalid/non-existent API key.\n\n**Purpose:** Verify that device authentication prevents unauthorized data submission.\n\n**Expected:** Status `401 Unauthorized`."
+					},
+					"response": []
+				},
+				{
+					"name": "14. Get Telemetry - Device 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has 2 telemetry entries', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.be.an('array');",
+									"    pm.expect(res).to.have.lengthOf(2);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/telemetry/device/{{device_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"telemetry",
+								"device",
+								"{{device_id}}"
+							]
+						},
+						"description": "Retrieve all telemetry data for Device 1. Should return the 2 readings sent in Requests 10 and 11.\n\n**Auth:** Bearer JWT token required (user must own the device).\n\n**Query Params (optional):**\n- `limit` (number, default 100) — max records to return\n\n**Expected:** Status `200 OK`. Array of 2 telemetry entries, sorted by timestamp descending."
+					},
+					"response": []
+				},
+				{
+					"name": "15. Get Telemetry - Device 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Response has 1 telemetry entry', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.be.an('array');",
+									"    pm.expect(res).to.have.lengthOf(1);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/telemetry/device/{{device_id_2}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"telemetry",
+								"device",
+								"{{device_id_2}}"
+							]
+						},
+						"description": "Retrieve telemetry data for Device 2 (Arduino Kitchen). Should return 1 entry from Request 12.\n\n**Auth:** Bearer JWT token required.\n\n**Expected:** Status `200 OK`. Array of 1 telemetry entry with gas_level and smoke_detected data."
+					},
+					"response": []
+				},
+				{
+					"name": "16. Get Telemetry - No Token (401)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 401 Unauthorized', function () {",
+									"    pm.response.to.have.status(401);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/telemetry/device/{{device_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"telemetry",
+								"device",
+								"{{device_id}}"
+							]
+						},
+						"description": "Attempt to retrieve telemetry data WITHOUT a JWT token.\n\n**Purpose:** Verify that reading telemetry data requires user authentication (even though writing telemetry only needs a device API key).\n\n**Expected:** Status `401 Unauthorized`."
+					},
+				"response": []
+			}
+		]
+		},
+		{
+			"name": "Cleanup",
+			"description": "Cleanup requests to delete test data. These run last in the collection to verify delete operations and ensure the database is clean for the next run.",
+			"item": [
+				{
+					"name": "17. Delete Device 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/devices/{{device_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"devices",
+								"{{device_id}}"
+							]
+						},
+						"description": "Delete a device and all its associated telemetry data (cascade delete).\n\n**Auth:** Bearer JWT token required.\n\n**Expected:** Status `200 OK`. Device 1 (ESP32) and all its telemetry are permanently deleted."
+					},
+					"response": []
+				},
+				{
+					"name": "18. Get All Devices - After Delete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Only 2 devices remain after delete', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.be.an('array');",
+									"    pm.expect(res).to.have.lengthOf(2);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/devices",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"devices"
+							]
+						},
+						"description": "Verify the delete operation was successful. After deleting Device 1 (ESP32 Living Room), only 2 devices should remain: Arduino Kitchen and ESP32 Rooftop.\n\n**Auth:** Bearer JWT token required.\n\n**Expected:** Status `200 OK`. Array of 2 devices."
+					},
+					"response": []
+				},
+				{
+					"name": "19. Delete User Account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200 OK', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test('Account deleted successfully', function () {",
+									"    const res = pm.response.json();",
+									"    pm.expect(res).to.have.property('message');",
+									"});",
+									"",
+									"// Clear environment variables",
+									"pm.environment.unset('jwt_token');",
+									"pm.environment.unset('user_id');",
+									"pm.environment.unset('device_id');",
+									"pm.environment.unset('device_api_key');",
+									"pm.environment.unset('device_id_2');",
+									"pm.environment.unset('device_api_key_2');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/account",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"account"
+							]
+						},
+						"description": "Delete the current user account and all associated devices + telemetry (cascade delete).\n\n**Auth:** Bearer JWT token required.\n\n**Expected:** Status `200 OK`. All user data permanently removed from the database.\n\n**Post-response script:** Clears all environment variables for a clean state."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

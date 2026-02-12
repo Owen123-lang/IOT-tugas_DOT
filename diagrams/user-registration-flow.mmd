@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant Client
+    participant AuthController
+    participant AuthService
+    participant UserService
+    participant Prisma
+    participant Database
+
+    Note over Client,Database: User Registration Flow
+    Client->>AuthController: POST /auth/register
+    AuthController->>AuthService: register(userData)
+    AuthService->>UserService: create(userData)
+    UserService->>UserService: hashPassword(password)
+    UserService->>Prisma: user.create(userData)
+    Prisma->>Database: INSERT INTO users
+    Database-->>Prisma: created user
+    Prisma-->>UserService: user object
+    UserService->>AuthService: user object
+    AuthService->>AuthService: generateJWT(user)
+    AuthService-->>AuthController: { access_token, user }
+    AuthController-->>Client: 201 Created + JWT Token

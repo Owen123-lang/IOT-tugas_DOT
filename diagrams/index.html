@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .diagram-container { margin: 20px 0; border: 1px solid #ccc; padding: 20px; }
+        .diagram-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .mermaid { text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>IoT Telemetry API - UML Diagrams</h1>
+    
+    <div class="diagram-container">
+        <div class="diagram-title">Entity Relationship Diagram</div>
+        <div class="mermaid">
+erDiagram
+    User {
+        string id PK
+        string email UK
+        string password
+        string name
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Device {
+        string id PK
+        string name
+        string type
+        string description
+        string apiKey UK
+        string userId FK
+        datetime createdAt
+        datetime updatedAt
+    }
+
+    Telemetry {
+        string id PK
+        string deviceId FK
+        float temperature
+        float humidity
+        json data
+        datetime timestamp
+    }
+
+    User ||--o{ Device : "owns"
+    Device ||--o{ Telemetry : "generates"
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <div class="diagram-title">User Registration Flow</div>
+        <div class="mermaid">
+sequenceDiagram
+    participant Client
+    participant AuthController
+    participant AuthService
+    participant UserService
+    participant Prisma
+    participant Database
+
+    Note over Client,Database: User Registration Flow
+    Client->>AuthController: POST /auth/register
+    AuthController->>AuthService: register(userData)
+    AuthService->>UserService: create(userData)
+    UserService->>UserService: hashPassword(password)
+    UserService->>Prisma: user.create(userData)
+    Prisma->>Database: INSERT INTO users
+    Database-->>Prisma: created user
+    Prisma-->>UserService: user object
+    UserService->>AuthService: user object
+    AuthService->>AuthService: generateJWT(user)
+    AuthService-->>AuthController: { access_token, user }
+    AuthController-->>Client: 201 Created + JWT Token
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <div class="diagram-title">User Login Flow</div>
+        <div class="mermaid">
+sequenceDiagram
+    participant Client
+    participant AuthController
+    participant AuthService
+    participant UserService
+    participant Prisma
+    participant Database
+
+    Note over Client,Database: User Login Flow
+    Client->>AuthController: POST /auth/login
+    AuthController->>AuthService: login(credentials)
+    AuthService->>UserService: findByEmail(email)
+    UserService->>Prisma: user.findUnique({email})
+    Prisma->>Database: SELECT * FROM users WHERE email = ?
+    Database-->>Prisma: user data
+    Prisma-->>UserService: user object
+    UserService->>UserService: comparePassword()
+    UserService-->>AuthService: user object
+    AuthService->>AuthService: validateUser() & generateJWT()
+    AuthService-->>AuthController: { access_token, user }
+    AuthController-->>Client: 200 OK + JWT Token
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <div class="diagram-title">Device Creation Flow</div>
+        <div class="mermaid">
+sequenceDiagram
+    participant Client
+    participant DeviceController
+    participant DeviceService
+    participant Prisma
+    participant Database
+
+    Note over Client,Database: Create Device Flow
+    Client->>DeviceController: POST /devices + JWT
+    DeviceController->>DeviceService: create(userId, deviceData)
+    DeviceService->>Prisma: device.create({data: {...deviceData, userId}})
+    Prisma->>Database: INSERT INTO devices
+    Database-->>Prisma: created device (with auto-generated apiKey)
+    Prisma-->>DeviceService: device object
+    DeviceService-->>DeviceController: DeviceResponseDto
+    DeviceController-->>Client: 201 Created + device data
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <div class="diagram-title">Telemetry Data Submission Flow</div>
+        <div class="mermaid">
+sequenceDiagram
+    participant Device
+    participant TelemetryController
+    participant TelemetryService
+    participant DeviceService
+    participant Prisma
+    participant Database
+
+    Note over Device,Database: Submit Telemetry Data
+    Device->>TelemetryController: POST /telemetry + API Key
+    TelemetryController->>TelemetryService: create(telemetryData)
+    TelemetryService->>DeviceService: findByApiKey(apiKey)
+    DeviceService->>Prisma: device.findUnique({where: {apiKey}})
+    Prisma->>Database: SELECT * FROM devices WHERE apiKey = ?
+    Database-->>Prisma: device data
+    Prisma-->>DeviceService: device object
+    DeviceService-->>TelemetryService: device object
+    alt Valid API Key
+        TelemetryService->>Prisma: telemetry.create({data: {deviceId: device.id, ...telemetryData}})
+        Prisma->>Database: INSERT INTO telemetry
+        Database-->>Prisma: telemetry record
+        Prisma-->>TelemetryService: telemetry object
+        TelemetryService-->>TelemetryController: TelemetryResponseDto
+        TelemetryController-->>Device: 201 Created
+    else Invalid API Key
+        TelemetryService-->>TelemetryController: 401 Unauthorized
+        TelemetryController-->>Device: 401 Unauthorized
+    end
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <div class="diagram-title">System Architecture</div>
+        <div class="mermaid">
+graph TB
+    subgraph "Client Layer"
+        WebApp[Web Application]
+        MobileApp[Mobile App]
+        IoTDevice[IoT Device]
+    end
+
+    subgraph "API Gateway / Load Balancer"
+        LB[Load Balancer]
+    end
+
+    subgraph "NestJS Application"
+        subgraph "Controllers"
+            AuthController[Auth Controller]
+            DeviceController[Device Controller]
+            TelemetryController[Telemetry Controller]
+        end
+
+        subgraph "Services"
+            AuthService[Auth Service]
+            UserService[User Service]
+            DeviceService[Device Service]
+            TelemetryService[Telemetry Service]
+        end
+
+        subgraph "Guards & Middleware"
+            JWTGuard[JWT Auth Guard]
+            ValidationPipe[Validation Pipe]
+        end
+    end
+
+    subgraph "Data Layer"
+        PrismaORM[Prisma ORM]
+        PostgreSQL[(PostgreSQL Database)]
+    end
+
+    subgraph "External Services"
+        Swagger[Swagger Documentation]
+        PrismaStudio[Prisma Studio]
+    end
+
+    %% Authentication Flow
+    WebApp --> LB
+    MobileApp --> LB
+    IoTDevice --> LB
+    
+    LB --> JWTGuard
+    JWTGuard --> ValidationPipe
+    ValidationPipe --> AuthController
+    ValidationPipe --> DeviceController
+    ValidationPipe --> TelemetryController
+
+    %% Controller to Service mappings
+    AuthController --> AuthService
+    DeviceController --> DeviceService
+    TelemetryController --> TelemetryService
+
+    %% Service Dependencies
+    AuthService --> UserService
+    DeviceService --> UserService
+    TelemetryService --> DeviceService
+
+    %% Service to Database
+    UserService --> PrismaORM
+    DeviceService --> PrismaORM
+    TelemetryService --> PrismaORM
+
+    %% Database Connection
+    PrismaORM --> PostgreSQL
+
+    %% Documentation Tools
+    LB --> Swagger
+    PrismaORM --> PrismaStudio
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        
+        // Function to save individual diagrams as SVG
+        function saveDiagramAsSVG(index) {
+            const diagrams = document.querySelectorAll('.mermaid');
+            if (index < diagrams.length) {
+                const svg = diagrams[index].querySelector('svg');
+                if (svg) {
+                    const svgData = new XMLSerializer().serializeToString(svg);
+                    const blob = new Blob([svgData], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const titles = ['entity-relationship', 'user-registration-flow', 'user-login-flow', 'device-create-flow', 'telemetry-submit-flow', 'system-architecture'];
+                    a.download = titles[index] + '.svg';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    // Save next diagram after a short delay
+                    setTimeout(() => saveDiagramAsSVG(index + 1), 500);
+                }
+            }
+        }
+        
+        // Add button to save all diagrams
+        const saveButton = document.createElement('button');
+        saveButton.textContent = 'Save All Diagrams as SVG';
+        saveButton.style.position = 'fixed';
+        saveButton.style.top = '10px';
+        saveButton.style.right = '10px';
+        saveButton.style.padding = '10px';
+        saveButton.style.backgroundColor = '#007bff';
+        saveButton.style.color = 'white';
+        saveButton.style.border = 'none';
+        saveButton.style.borderRadius = '5px';
+        saveButton.style.cursor = 'pointer';
+        saveButton.style.zIndex = '1000';
+        
+        saveButton.onclick = () => saveDiagramAsSVG(0);
+        document.body.appendChild(saveButton);
+    </script>
+</body>
+</html>
