@@ -1,30 +1,33 @@
-#  IoT Telemetry API
+# IoT Telemetry API
 
 API RESTful untuk sistem monitoring IoT menggunakan NestJS, TypeScript, dan PostgreSQL. Aplikasi ini menyediakan CRUD operations untuk manajemen perangkat IoT dan data telemetry dengan autentikasi JWT yang aman.
 
-##  Tabel Konten
+## Tabel Konten
 
 - [Fitur Utama](#fitur-utama)
 - [Arsitektur & Pattern](#arsitektur--pattern)
 - [Diagram UML](#diagram-uml)
 - [Instalasi & Setup](#instalasi--setup)
 - [API Endpoints](#api-endpoints)
+- [Postman Documentation](#postman-documentation)
 - [Database Schema](#database-schema)
 - [Testing](#testing)
 - [Environment Variables](#environment-variables)
 - [Teknologi yang Digunakan](#teknologi-yang-digunakan)
 
-##  Fitur Utama
+## Fitur Utama
 
 ### Autentikasi & Keamanan
+
 - **JWT Authentication**: Login user dengan token JWT yang aman
 - **Device API Key**: Setiap perangkat memiliki unique API key untuk submit data
 - **Password Hashing**: Menggunakan bcrypt untuk keamanan password
 - **Ownership Validation**: User hanya bisa mengakses device miliknya sendiri
 
-###  CRUD Operations
+### CRUD Operations
+
 - **User Management**: Registrasi, login, dan penghapusan akun
-- **Device Management**: 
+- **Device Management**:
   - Create, Read, Update, Delete perangkat IoT
   - Batch creation untuk multiple devices
   - Unique API key generation untuk setiap device
@@ -34,6 +37,7 @@ API RESTful untuk sistem monitoring IoT menggunakan NestJS, TypeScript, dan Post
   - Flexible data storage (JSON field untuk custom sensor data)
 
 ### Testing
+
 - **E2E Testing**: Coverage lengkap untuk semua endpoint
 - **Authentication Testing**: Validasi JWT token dan API key
 - **Database Cleanup**: Auto cleanup test data
@@ -150,9 +154,10 @@ sequenceDiagram
     Controller-->>Client: 201 Created
 ```
 
-##  Instalasi & Setup
+## Instalasi & Setup
 
 ### Prerequisites
+
 - Node.js (v18+)
 - PostgreSQL
 - npm atau yarn
@@ -160,36 +165,41 @@ sequenceDiagram
 ### Step-by-Step Installation
 
 1. **Clone repository**
+
    ```bash
    git clone <repository-url>
    cd iot-telemetry-api
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Setup Environment Variables**
+
    ```bash
    cp .env.example .env
    # Edit .env file dengan database credentials dan JWT secret
    ```
 
 4. **Setup Database**
+
    ```bash
    # Generate Prisma client
    npm run prisma:generate
-   
+
    # Run database migrations
    npm run prisma:migrate
    ```
 
 5. **Start Application**
+
    ```bash
    # Development mode
    npm run start:dev
-   
+
    # Production mode
    npm run build
    npm run start:prod
@@ -205,6 +215,7 @@ sequenceDiagram
 ### Authentication
 
 #### Register User
+
 ```http
 POST /auth/register
 Content-Type: application/json
@@ -217,6 +228,7 @@ Content-Type: application/json
 ```
 
 #### Login
+
 ```http
 POST /auth/login
 Content-Type: application/json
@@ -228,6 +240,7 @@ Content-Type: application/json
 ```
 
 #### Delete Account
+
 ```http
 DELETE /auth/account
 Authorization: Bearer <jwt_token>
@@ -236,6 +249,7 @@ Authorization: Bearer <jwt_token>
 ### Devices Management
 
 #### Create Device
+
 ```http
 POST /devices
 Authorization: Bearer <jwt_token>
@@ -249,18 +263,21 @@ Content-Type: application/json
 ```
 
 #### Get All Devices
+
 ```http
 GET /devices
 Authorization: Bearer <jwt_token>
 ```
 
 #### Get Device by ID
+
 ```http
 GET /devices/:id
 Authorization: Bearer <jwt_token>
 ```
 
 #### Update Device
+
 ```http
 PATCH /devices/:id
 Authorization: Bearer <jwt_token>
@@ -272,12 +289,14 @@ Content-Type: application/json
 ```
 
 #### Delete Device
+
 ```http
 DELETE /devices/:id
 Authorization: Bearer <jwt_token>
 ```
 
 #### Create Multiple Devices (Batch)
+
 ```http
 POST /devices/batch
 Authorization: Bearer <jwt_token>
@@ -300,6 +319,7 @@ Content-Type: application/json
 ### Telemetry Data
 
 #### Submit Telemetry Data
+
 ```http
 POST /telemetry
 Content-Type: application/json
@@ -317,14 +337,43 @@ Content-Type: application/json
 ```
 
 #### Get Telemetry for Device
+
 ```http
 GET /telemetry/device/:deviceId?limit=100
 Authorization: Bearer <jwt_token>
 ```
 
+## 📮 Postman Documentation
+
+Interactive API documentation is available in Postman:
+
+**[View Postman Collection](https://speeding-shadow-306868.postman.co/workspace/Team-Workspace~c4f35a82-8a91-4f87-8be1-ef75b79a19df/request/52285863-73e606f8-3ac3-424e-8496-9599585aaf5c?action=share&creator=52285863&ctx=documentation&active-environment=52285863-73a4cd88-c5a3-4008-812c-18159b4f5b64)**
+
+The Postman collection includes:
+
+- **Authentication endpoints** (Register, Login, Delete Account)
+- **Device management** (CRUD operations with batch creation)
+- **Telemetry data submission** (Device API key authentication)
+- **Request examples** with sample data
+- **Environment variables** for quick testing
+
+### How to Use the Postman Collection
+
+1. **Clone the Collection**: Click the link above and fork the collection to your workspace
+2. **Set Environment Variables**:
+   - `baseUrl`: `http://localhost:3000`
+   - `jwtToken`: Will be automatically set after login
+   - `apiKey`: Will be automatically set after device creation
+3. **Run Authentication Flow**:
+   - Execute "Register User" to create account
+   - Execute "Login" to get JWT token (auto-saved to environment)
+   - Execute "Create Device" to get API key (auto-saved to environment)
+4. **Test All Endpoints**: Use the pre-configured requests with authentication
+
 ## 🗄️ Database Schema
 
 ### Users Table
+
 - `id`: UUID (Primary Key)
 - `email`: String (Unique)
 - `password`: String (Hashed dengan bcrypt)
@@ -333,6 +382,7 @@ Authorization: Bearer <jwt_token>
 - `updatedAt`: DateTime
 
 ### Devices Table
+
 - `id`: UUID (Primary Key)
 - `name`: String
 - `type`: String (e.g., "ESP32", "Arduino")
@@ -343,6 +393,7 @@ Authorization: Bearer <jwt_token>
 - `updatedAt`: DateTime
 
 ### Telemetry Table
+
 - `id`: UUID (Primary Key)
 - `deviceId`: String (Foreign Key ke Devices)
 - `temperature`: Float (Optional)
@@ -351,6 +402,7 @@ Authorization: Bearer <jwt_token>
 - `timestamp`: DateTime (Default: now())
 
 ### Relationships
+
 - One User can have Many Devices (1:N)
 - One Device can generate Many Telemetry records (1:N)
 - Cascade deletion: Deleting user deletes all devices and telemetry
@@ -377,10 +429,11 @@ npm run test:watch
 ### Test Coverage
 
 E2E tests cover:
+
 - User registration and login
 - JWT authentication flow
 - Device CRUD operations (Create, Read, Update, Delete)
--  Device batch creation
+- Device batch creation
 - Telemetry data submission
 - API key validation
 - Authorization (unauthorized access prevention)
@@ -420,31 +473,37 @@ PORT=3000
 NODE_ENV=development
 ```
 
-##  Teknologi yang Digunakan
+## Teknologi yang Digunakan
 
 ### Backend Framework
+
 - **NestJS**: Progressive Node.js framework for building efficient applications
 - **TypeScript**: Type-safe JavaScript superset
 
 ### Database & ORM
+
 - **PostgreSQL**: Relational database
 - **Prisma**: Next-generation ORM with type-safe database access
 
 ### Authentication & Security
+
 - **JWT**: JSON Web Tokens for user authentication
 - **bcrypt**: Password hashing library
 - **Passport**: Authentication middleware for Node.js
 
 ### Validation & Documentation
+
 - **class-validator**: DTO validation
 - **class-transformer**: Data transformation
 - **Swagger/OpenAPI**: API documentation
 
 ### Testing
+
 - **Jest**: JavaScript testing framework
 - **Supertest**: HTTP assertion library
 
 ### Development Tools
+
 - **ESLint**: Code linting
 - **Prettier**: Code formatting
 - **Prisma Studio**: Database management UI
