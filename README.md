@@ -1,8 +1,8 @@
-# 🌡️ IoT Telemetry API
+#  IoT Telemetry API
 
 API RESTful untuk sistem monitoring IoT menggunakan NestJS, TypeScript, dan PostgreSQL. Aplikasi ini menyediakan CRUD operations untuk manajemen perangkat IoT dan data telemetry dengan autentikasi JWT yang aman.
 
-## 📋 Tabel Konten
+##  Tabel Konten
 
 - [Fitur Utama](#fitur-utama)
 - [Arsitektur & Pattern](#arsitektur--pattern)
@@ -14,15 +14,15 @@ API RESTful untuk sistem monitoring IoT menggunakan NestJS, TypeScript, dan Post
 - [Environment Variables](#environment-variables)
 - [Teknologi yang Digunakan](#teknologi-yang-digunakan)
 
-## 🚀 Fitur Utama
+##  Fitur Utama
 
-### ✅ Autentikasi & Keamanan
+### Autentikasi & Keamanan
 - **JWT Authentication**: Login user dengan token JWT yang aman
 - **Device API Key**: Setiap perangkat memiliki unique API key untuk submit data
 - **Password Hashing**: Menggunakan bcrypt untuk keamanan password
 - **Ownership Validation**: User hanya bisa mengakses device miliknya sendiri
 
-### 📊 CRUD Operations
+###  CRUD Operations
 - **User Management**: Registrasi, login, dan penghapusan akun
 - **Device Management**: 
   - Create, Read, Update, Delete perangkat IoT
@@ -33,13 +33,13 @@ API RESTful untuk sistem monitoring IoT menggunakan NestJS, TypeScript, dan Post
   - Retrieve data telemetry per device dengan pagination
   - Flexible data storage (JSON field untuk custom sensor data)
 
-### 🧪 Testing
+### Testing
 - **E2E Testing**: Coverage lengkap untuk semua endpoint
 - **Authentication Testing**: Validasi JWT token dan API key
 - **Database Cleanup**: Auto cleanup test data
 - **Error Scenario Testing**: Testing untuk unauthorized access, invalid data, dll.
 
-## 🏗️ Arsitektur & Pattern
+## Arsitektur & Pattern
 
 ### Service-Repository Pattern
 
@@ -79,7 +79,7 @@ AppModule
 └── TelemetryModule (imports DevicesModule)
 ```
 
-## 📈 Diagram UML
+## Diagram UML
 
 ### Entity Relationship Diagram
 
@@ -150,7 +150,7 @@ sequenceDiagram
     Controller-->>Client: 201 Created
 ```
 
-## 🛠️ Instalasi & Setup
+##  Instalasi & Setup
 
 ### Prerequisites
 - Node.js (v18+)
@@ -377,15 +377,15 @@ npm run test:watch
 ### Test Coverage
 
 E2E tests cover:
-- ✅ User registration and login
-- ✅ JWT authentication flow
-- ✅ Device CRUD operations (Create, Read, Update, Delete)
-- ✅ Device batch creation
-- ✅ Telemetry data submission
-- ✅ API key validation
-- ✅ Authorization (unauthorized access prevention)
-- ✅ Ownership validation (users can only access their devices)
-- ✅ Error scenarios (invalid credentials, invalid API keys, etc.)
+- User registration and login
+- JWT authentication flow
+- Device CRUD operations (Create, Read, Update, Delete)
+-  Device batch creation
+- Telemetry data submission
+- API key validation
+- Authorization (unauthorized access prevention)
+- Ownership validation (users can only access their devices)
+- Error scenarios (invalid credentials, invalid API keys, etc.)
 
 ### Test Structure
 
@@ -420,7 +420,7 @@ PORT=3000
 NODE_ENV=development
 ```
 
-## 🛠️ Teknologi yang Digunakan
+##  Teknologi yang Digunakan
 
 ### Backend Framework
 - **NestJS**: Progressive Node.js framework for building efficient applications
@@ -448,25 +448,3 @@ NODE_ENV=development
 - **ESLint**: Code linting
 - **Prettier**: Code formatting
 - **Prisma Studio**: Database management UI
-
-## 🤝 Kontribusi
-
-1. Fork repository
-2. Buat feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add some amazing feature'`)
-4. Push ke branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📄 License
-
-Project ini menggunakan license **UNLICENSED**.
-
-## 📞 Contact
-
-Untuk pertanyaan atau support, silakan hubungi melalui:
-- Email: [your-email@example.com]
-- GitHub Issues: [repository-issues]
-
----
-
-**IoT Telemetry API** - Built with ❤️ using NestJS and TypeScript
